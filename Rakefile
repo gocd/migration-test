@@ -52,5 +52,5 @@ end
 
 def addon_for(core)
   versions_map = JSON.parse(File.read('./addons/addon_builds.json'))
-  versions_map.select{|v| v['gocd_version'] == core}[0]['addons']['postgresql']
+  versions_map.select{|v| v['gocd_version'] == core}.last['addons']['postgresql']
 end

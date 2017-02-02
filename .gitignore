@@ -1,0 +1,3 @@
+addons/*.jar
+addons/*.json
+.vagrant

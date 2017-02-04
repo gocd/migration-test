@@ -220,13 +220,13 @@ end
       sh(%Q{sudo -H -u go bash -c 'mkdir -p #{migration_location}/config ; cp /vagrant/addons/go-postgresql-*.jar #{migration_location}'})
       sh(%Q{sudo -H -u go bash -c 'unzip #{backup_path}/db.zip -d #{migration_location}'})
       postgres_peoperties_in("#{migration_location}/config")
-      addon = addon_for server_version
+      addon = postgres_jar_for server_version
       cd migration_location do
         sh(%Q{sudo -H -u go bash -c 'java -Dcruise.config.dir=#{migration_location}/config -Dgo.h2.db.location=#{migration_location} -jar #{addon}'})
       end
     end
 
-    def addon_for(core)
+    def postgres_jar_for(core)
       versions_map = JSON.parse(File.read('/vagrant/addons/addon_builds.json'))
       versions_map.select{|v| v['gocd_version'] == core}.last['addons']['postgresql']
     end

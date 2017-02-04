@@ -220,9 +220,20 @@ end
       sh(%Q{sudo -H -u go bash -c 'mkdir -p #{migration_location}/config ; cp /vagrant/addons/go-postgresql-*.jar #{migration_location}'})
       sh(%Q{sudo -H -u go bash -c 'unzip #{backup_path}/db.zip -d #{migration_location}'})
       postgres_peoperties_in("#{migration_location}/config")
+      addon = addon_for server_version
       cd migration_location do
-        sh(%Q{sudo -H -u go bash -c 'java -Dcruise.config.dir=#{migration_location}/config -Dgo.h2.db.location=#{migration_location} -jar go-postgresql-#{ENV['GO_VERSION']}.jar'})
+        sh(%Q{sudo -H -u go bash -c 'java -Dcruise.config.dir=#{migration_location}/config -Dgo.h2.db.location=#{migration_location} -jar #{addon}'})
       end
+    end
+
+    def addon_for(core)
+      versions_map = JSON.parse(File.read('/vagrant/addons/addon_builds.json'))
+      versions_map.select{|v| v['gocd_version'] == core}.last['addons']['postgresql']
+    end
+
+    def server_version
+      versions = JSON.parse(open('http://localhost:8153/go/api/version','Accept' => 'application/vnd.go.cd.v1+json').read)
+      "#{versions['version']}-#{versions['build_number']}"
     end
 
     task :migration_test => [:repo, :install, :check_service_is_up, :create_pipeline, :unpause_pipeline, :pipeline_status, :setup_postgres, :migrate, :setup_addon, :start, :check_service_is_up_w_postgres, :trigger_pipeline, :pipeline_status_after_migration]

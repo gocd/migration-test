@@ -154,13 +154,10 @@ end
     task :setup_addon do
       sh('echo ''GO_SERVER_SYSTEM_PROPERTIES=\"\$GO_SERVER_SYSTEM_PROPERTIES -Dgo.database.provider=com.thoughtworks.go.postgresql.PostgresqlDatabase\"''>> /etc/default/go-server')
 
-      version_revision = ENV['GO_VERSION']
-      version = version_revision.split('-')[0]
-      sh(%Q{sudo -H -u go bash -c 'mkdir -p /var/lib/go-server/addons ; cp /vagrant/addons/go-postgresql-#{version}-* /var/lib/go-server/addons/'})
+      addon = postgres_jar_for server_version
+      sh(%Q{sudo -H -u go bash -c 'mkdir -p /var/lib/go-server/addons ; cp /vagrant/addons/#{addon} /var/lib/go-server/addons/'})
       postgres_peoperties_in("/etc/go")
     end
-
-
 
     task :check_service_is_up do
        service_status('No')
@@ -169,8 +166,6 @@ end
     task :check_service_is_up_w_postgres do
        service_status('Yes')
     end
-
-
 
     task :create_pipeline do
       url = 'http://localhost:8153/go/api/admin/pipelines'
@@ -215,12 +210,13 @@ end
       end
       raise "Go Server backup failed with error: #{response.body}" unless response.is_a?(Net::HTTPOK)
       backup_path = JSON.parse(response.body)['path']
+      addon = postgres_jar_for server_version
       sh('service go-server stop')
 
       sh(%Q{sudo -H -u go bash -c 'mkdir -p #{migration_location}/config ; cp /vagrant/addons/go-postgresql-*.jar #{migration_location}'})
       sh(%Q{sudo -H -u go bash -c 'unzip #{backup_path}/db.zip -d #{migration_location}'})
       postgres_peoperties_in("#{migration_location}/config")
-      addon = postgres_jar_for server_version
+
       cd migration_location do
         sh(%Q{sudo -H -u go bash -c 'java -Dcruise.config.dir=#{migration_location}/config -Dgo.h2.db.location=#{migration_location} -jar #{addon}'})
       end

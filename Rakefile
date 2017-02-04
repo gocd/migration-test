@@ -20,7 +20,7 @@ require 'fileutils'
 require 'open-uri'
 require 'logger'
 
-RELEASES_JSON_URL = 'https://download.go.cd/experimental/releases.json'
+RELEASES_JSON_URL = ENV['RELEASES_JSON_URL'] || 'https://download.go.cd/experimental/releases.json'
 
 task :test_migration do
     begin

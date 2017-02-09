@@ -19,7 +19,7 @@
 
 Vagrant.configure(2) do |config|
   boxes = {
-    'centos-7'     => {virtualbox: 'boxcutter/centos71'},
+    'centos-7'     => {virtualbox: 'boxcutter/centos73'},
   }
 
   boxes.each do |name, box_cfg|

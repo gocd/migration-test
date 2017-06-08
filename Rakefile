@@ -39,7 +39,7 @@ def download_addons
   myhash.each_with_index do |key, index|
     if full_version.include? myhash[index]['go_full_version']
       if (!File.exists?("addons/go-postgresql-#{key['go_full_version']}.jar"))
-        sh "curl -k -o addons/#{addon_for(key['go_full_version'])} #{ENV['ADDON_DOWNLOAD_URL']}/#{key['go_full_version']}/#{addon_for(key['go_full_version'])}"
+        sh "curl -k -o addons/#{addon_for(key['go_full_version'])} --user '#{ENV['EXTENSIONS_USER']}:#{ENV['EXTENSIONS_PASSWORD']}'  #{ENV['ADDON_DOWNLOAD_URL']}/#{key['go_full_version']}/download?eula_accepted=true"
       end
     end
   end

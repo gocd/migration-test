@@ -1,5 +1,5 @@
 ##########################################################################
-# Copyright 2017 ThoughtWorks, Inc.
+# Copyright 2018 ThoughtWorks, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ require 'json'
 require 'tmpdir'
 require 'net/http'
 
-PIPELINE_NAME = 'testpipeline'
+PIPELINE_NAME = 'testpipeline'.freeze
 
 class Redhat
   include Rake::DSL if defined?(Rake::DSL)
@@ -47,42 +47,41 @@ class Redhat
     sh("yum install --assumeyes #{pkg_name}-#{pkg_verion}")
   end
 
-  def uninstall(pkg_name,pkg_verion)
+  def uninstall(pkg_name, pkg_verion)
     sh("yum remove --assumeyes #{pkg_name}-#{pkg_verion}")
   end
 
-  def setup_postgres()
-    sh("yum install --assumeyes postgresql-server")
-    sh("yum install --assumeyes postgresql-contrib")
-    sh(%Q{sudo -H -u postgres bash -c 'initdb -D /var/lib/pgsql/data'})
-    sh("service postgresql start")
-    sh(%Q{sudo -H -u postgres bash -c 'sed -i 's/peer/md5/g' /var/lib/pgsql/data/pg_hba.conf'})
-    sh(%Q{sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"})
-    sh("service postgresql restart")
-    sh(%Q{sudo -H -u postgres bash -c 'createdb -U postgres cruise'})
+  def setup_postgres
+    sh('yum install --assumeyes postgresql-server')
+    sh('yum install --assumeyes postgresql-contrib')
+    sh(%(su - postgres -c bash -c 'initdb -D /var/lib/pgsql/data'))
+    sh(%(su - postgres -c bash -c 'pg_ctl -D /var/lib/pgsql/data -l /var/lib/pgsql/data/logfile start' && sleep 10))
+    sh(%(su - postgres -c bash -c 'sed -i 's/peer/md5/g' /var/lib/pgsql/data/pg_hba.conf'))
+    sh(%(su - postgres -c /bin/bash -c "psql -c \\"ALTER USER postgres WITH PASSWORD 'postgres'\\";"))
+    sh(%(su - postgres -c bash -c 'createdb -U postgres cruise'))
+    sh(%(su - postgres -c bash -c 'pg_ctl -D /var/lib/pgsql/data -l /var/lib/pgsql/data/logfile restart'))
   end
-
 end
 
 {
-  'centos'     => Redhat,
+  'centos' => Redhat
 }.each do |os, klass|
   namespace os do
-    @postgres_setup_done='No'
-    @addon_version=nil
+    @postgres_setup_done = 'No'
+    @addon_version = nil
 
     def trigger_pipeline
       url = "http://localhost:8153/go/api/pipelines/#{PIPELINE_NAME}/schedule"
       puts 'trigger the pipeline'
-      sh(%Q{curl -sL -w "%{http_code}" -X POST -H "Accept:application/vnd.go.cd.v1+text" -H "CONFIRM:true" #{url} -o /dev/null})
+      sh(%(curl -sL -w "%{http_code}" -X POST -H "Accept:application/vnd.go.cd.v1+text" -H "CONFIRM:true" #{url} -o /dev/null))
     end
 
     def postgres_peoperties_in(path)
-      sh(%Q{sudo -H -u go bash -c 'echo "db.host=localhost"  >> #{path}/postgresqldb.properties'})
-      sh(%Q{sudo -H -u go bash -c 'echo "db.port=5432"  >> #{path}/postgresqldb.properties'})
-      sh(%Q{sudo -H -u go bash -c 'echo "db.name=cruise"  >> #{path}/postgresqldb.properties'})
-      sh(%Q{sudo -H -u go bash -c 'echo "db.user=postgres"  >> #{path}/postgresqldb.properties'})
-      sh(%Q{sudo -H -u go bash -c 'echo "db.password=postgres"  >> #{path}/postgresqldb.properties'})
+      sh(%(su - go bash -c 'echo "db.host=localhost"  >> #{path}/postgresqldb.properties'))
+      sh(%(su - go bash -c 'echo "db.port=5432"  >> #{path}/postgresqldb.properties'))
+      sh(%(su - go bash -c 'echo "db.name=cruise"  >> #{path}/postgresqldb.properties'))
+      sh(%(su - go bash -c 'echo "db.user=postgres"  >> #{path}/postgresqldb.properties'))
+      sh(%(su - go bash -c 'echo "db.password=postgres"  >> #{path}/postgresqldb.properties'))
     end
 
     def service_status(migrated)
@@ -93,7 +92,7 @@ end
       if migrated == 'Yes'
         Timeout.timeout(120) do
           loop do
-            if File.open('/var/log/go-server/go-server.log').lines.any?{|line| line.include?('Using connection configuration jdbc:postgresql://localhost:5432/cruise [User: postgres] [Password Encrypted: false]')}
+            if File.open('/var/log/go-server/go-server.log').lines.any? { |line| line.include?('Using connection configuration jdbc:postgresql://localhost:5432/cruise [User: postgres] [Password Encrypted: false]') }
               p 'server up with postgres'
               break
             end
@@ -101,11 +100,10 @@ end
         end
       end
 
-
       puts 'wait for agent to come up'
       Timeout.timeout(180) do
         loop do
-          agents = JSON.parse(open('http://localhost:8153/go/api/agents', 'Accept' => "application/vnd.go.cd.v4+json").read)['_embedded']['agents']
+          agents = JSON.parse(open('http://localhost:8153/go/api/agents', 'Accept' => 'application/vnd.go.cd.v4+json').read)['_embedded']['agents']
 
           if agents.any? { |a| a['agent_state'] == 'Idle' }
             puts 'Agent is up'
@@ -115,20 +113,20 @@ end
       end
     end
 
-    def check_pipeline_in_cctray label
+    def check_pipeline_in_cctray(label)
       begin
         timeout(180) do
-          while(true) do
-            response = open("http://localhost:8153/go/cctray.xml").read
-              if response.include? %Q(<Project name="#{PIPELINE_NAME} :: defaultStage" activity="Sleeping" lastBuildStatus="Success" lastBuildLabel="#{label}") then
-                puts "Pipeline completed successfully"
-                break
-              end
+          loop do
+            response = open('http://localhost:8153/go/cctray.xml').read
+            if response.include? %(<Project name="#{PIPELINE_NAME} :: defaultStage" activity="Sleeping" lastBuildStatus="Success" lastBuildLabel="#{label}")
+              puts 'Pipeline completed successfully'
+              break
+            end
           end
         end
       end
-      rescue Timeout::Error
-        raise "Pipeline was not built successfully. Wait timed out"
+    rescue Timeout::Error
+      raise 'Pipeline was not built successfully. Wait timed out'
     end
 
     task :repo do
@@ -136,15 +134,15 @@ end
     end
 
     task :install do
-       klass.new.install('go-server', ENV['GO_VERSION'])
-       klass.new.install('go-agent', ENV['GO_VERSION'])
-       sh('service go-server start')
-       sh('service go-agent start')
+      klass.new.install('go-server', ENV['GO_VERSION'])
+      klass.new.install('go-agent', ENV['GO_VERSION'])
+      sh('/etc/init.d/go-server start')
+      sh('/etc/init.d/go-agent start')
     end
 
     task :start do
-       sh('service go-server start')
-       sh('service go-agent start')
+      sh('/etc/init.d/go-server start')
+      sh('/etc/init.d/go-agent start')
     end
 
     task :setup_postgres do
@@ -155,54 +153,52 @@ end
     task :setup_addon do
       sh('echo ''GO_SERVER_SYSTEM_PROPERTIES=\"\$GO_SERVER_SYSTEM_PROPERTIES -Dgo.database.provider=com.thoughtworks.go.postgresql.PostgresqlDatabase\"''>> /etc/default/go-server')
 
-      sh(%Q{sudo -H -u go bash -c 'mkdir -p /var/lib/go-server/addons ; cp /vagrant/addons/#{@addon_version} /var/lib/go-server/addons/'})
-      postgres_peoperties_in("/etc/go")
+      sh(%(su - go bash -c 'mkdir -p /var/lib/go-server/addons ; cp /migration/addons/#{@addon_version} /var/lib/go-server/addons/'))
+      postgres_peoperties_in('/etc/go')
     end
 
     task :check_service_is_up do
-       service_status('No')
+      service_status('No')
     end
 
     task :check_service_is_up_w_postgres do
-       service_status('Yes')
+      service_status('Yes')
     end
 
     task :create_pipeline do
       url = 'http://localhost:8153/go/api/admin/pipelines'
       puts 'create a pipeline'
-      sh(%Q{curl -sL -w "%{http_code}" -X POST  -H "Accept: application/vnd.go.cd.v3+json" -H "Content-Type: application/json" --data "@/vagrant/rakelib/pipeline.json" #{url} -o /dev/null})
+      sh(%(curl -sL -w "%{http_code}" -X POST  -H "Accept: application/vnd.go.cd.v3+json" -H "Content-Type: application/json" --data "@/migration/rakelib/pipeline.json" #{url} -o /dev/null))
     end
-
 
     task :unpause_pipeline do
       url = "http://localhost:8153/go/api/pipelines/#{PIPELINE_NAME}/unpause"
       puts 'unpause the pipeline'
-      sh(%Q{curl -sL -w "%{http_code}" -X POST  -H "Accept:application/vnd.go.cd.v1+text" -H "CONFIRM:true" #{url} -o /dev/null})
+      sh(%(curl -sL -w "%{http_code}" -X POST  -H "Accept:application/vnd.go.cd.v1+text" -H "CONFIRM:true" #{url} -o /dev/null))
     end
-
 
     task :trigger_pipeline do
       trigger_pipeline
     end
 
     task :pipeline_status do
-       check_pipeline_in_cctray 1
+      check_pipeline_in_cctray 1
     end
 
     task :pipeline_status_after_migration do
-       check_pipeline_in_cctray 2
+      check_pipeline_in_cctray 2
     end
 
     task :stop do
-      sh('service go-server stop')
-      sh('service go-agent stop')
+      sh('/etc/init.d/go-server stop')
+      sh('/etc/init.d/go-agent stop')
     end
 
     task :migrate do
-      migration_location = "#{Dir.tmpdir()}/migration"
-      uri = URI.parse("http://localhost:8153/go/api/backups")
+      migration_location = "#{Dir.tmpdir}/migration"
+      uri = URI.parse('http://localhost:8153/go/api/backups')
 
-      header = {'Accept' => 'application/vnd.go.cd.v1+json', 'Confirm' => 'true'}
+      header = { 'Accept' => 'application/vnd.go.cd.v1+json', 'Confirm' => 'true' }
       http = Net::HTTP.new(uri.host, uri.port)
       request = Net::HTTP::Post.new(uri.request_uri, header)
 
@@ -211,28 +207,27 @@ end
       raise "Go Server backup failed with error: #{response.body}" unless response.is_a?(Net::HTTPOK)
       backup_path = JSON.parse(response.body)['path']
       @addon_version = postgres_jar_for server_version
-      sh('service go-server stop')
+      sh('/etc/init.d/go-server stop')
 
-      sh(%Q{sudo -H -u go bash -c 'mkdir -p #{migration_location}/config ; cp /vagrant/addons/#{@addon_version} #{migration_location}'})
-      sh(%Q{sudo -H -u go bash -c 'unzip #{backup_path}/db.zip -d #{migration_location}'})
+      sh(%(su - go bash -c 'mkdir -p #{migration_location}/config ; cp /migration/addons/#{@addon_version} #{migration_location}'))
+      sh(%(su - go bash -c 'unzip #{backup_path}/db.zip -d #{migration_location}'))
       postgres_peoperties_in("#{migration_location}/config")
 
       cd migration_location do
-        sh(%Q{sudo -H -u go bash -c 'java -Dcruise.config.dir=#{migration_location}/config -Dgo.h2.db.location=#{migration_location} -jar #{@addon_version}'})
+        sh(%(su - go bash -c 'java -Dcruise.config.dir=#{migration_location}/config -Dgo.h2.db.location=#{migration_location} -jar /migration/addons/#{@addon_version}'))
       end
     end
 
     def postgres_jar_for(core)
-      versions_map = JSON.parse(File.read('/vagrant/addons/addon_builds.json'))
-      versions_map.select{|v| v['gocd_version'] == core}.last['addons']['postgresql']
+      versions_map = JSON.parse(File.read('/migration/addons/addon_builds.json'))
+      versions_map.select { |v| v['gocd_version'] == core }.last['addons']['postgresql']
     end
 
     def server_version
-      versions = JSON.parse(open('http://localhost:8153/go/api/version','Accept' => 'application/vnd.go.cd.v1+json').read)
+      versions = JSON.parse(open('http://localhost:8153/go/api/version', 'Accept' => 'application/vnd.go.cd.v1+json').read)
       "#{versions['version']}-#{versions['build_number']}"
     end
 
-    task :migration_test => [:repo, :install, :check_service_is_up, :create_pipeline, :unpause_pipeline, :pipeline_status, :setup_postgres, :migrate, :setup_addon, :start, :check_service_is_up_w_postgres, :trigger_pipeline, :pipeline_status_after_migration]
-
+    task migration_test: %i[repo install check_service_is_up create_pipeline unpause_pipeline pipeline_status setup_postgres migrate setup_addon start check_service_is_up_w_postgres trigger_pipeline pipeline_status_after_migration]
   end
 end

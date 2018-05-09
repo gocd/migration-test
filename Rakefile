@@ -1,5 +1,5 @@
 ##########################################################################
-# Copyright 2017 ThoughtWorks, Inc.
+# Copyright 2018 ThoughtWorks, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,34 +23,55 @@ require 'logger'
 RELEASES_JSON_URL = ENV['RELEASES_JSON_URL'] || 'https://download.go.cd/experimental/releases.json'
 
 task :test_migration do
-    begin
-      download_addons
-      sh "GO_VERSION=#{full_version} vagrant up centos-7 --provider #{ENV['PROVIDER'] || 'virtualbox'} --provision"
-    rescue => e
-      raise "Migration testing failed. Error message #{e.message}"
-    ensure
-      sh "vagrant destroy centos-7 --force"
-    end
+  begin
+    download_addons
+    boot_centos_container
+    run_command = %(bash -lc "rake --trace --rakefile /migration/rakelib/migrate.rake centos:migration_test GO_VERSION=#{full_version}")
+    sh "docker exec centos #{run_command}"
+  rescue StandardError => e
+    raise "Migration testing failed. Error message #{e.message}"
+  ensure
+    sh "docker stop centos"
+  end
 end
 
 def download_addons
   json = JSON.parse(open(RELEASES_JSON_URL).read)
-  myhash = json.sort {|a, b| a['go_full_version'] <=> b['go_full_version']}.reverse
+  myhash = json.sort_by { |a| a['go_full_version'] }.reverse
   myhash.each_with_index do |key, index|
-    if full_version.include? myhash[index]['go_full_version']
-      if (!File.exists?("addons/go-postgresql-#{key['go_full_version']}.jar"))
-        sh "curl --fail -L -k -o addons/#{addon_for(key['go_full_version'])} --user '#{ENV['EXTENSIONS_USER']}:#{ENV['EXTENSIONS_PASSWORD']}'  #{ENV['ADDON_DOWNLOAD_URL']}/#{key['go_full_version']}/download?eula_accepted=true"
-      end
+    next unless full_version.include? myhash[index]['go_full_version']
+    unless File.exist?("addons/go-postgresql-#{key['go_full_version']}.jar")
+      sh "curl --fail -L -k -o addons/#{addon_for(key['go_full_version'])} --user '#{ENV['EXTENSIONS_USER']}:#{ENV['EXTENSIONS_PASSWORD']}'  #{ENV['ADDON_DOWNLOAD_URL']}/#{key['go_full_version']}/download?eula_accepted=true"
     end
   end
 end
 
 def full_version
   json = JSON.parse(open(RELEASES_JSON_URL).read)
-  json.select {|x| x['go_version'] == ENV['GO_VERSION']}.sort {|a, b| a['go_build_number'] <=> b['go_build_number']}.last['go_full_version']
+  json.select { |x| x['go_version'] == ENV['GO_VERSION'] }.sort_by { |a| a['go_build_number'] }.last['go_full_version']
 end
 
 def addon_for(core)
   versions_map = JSON.parse(File.read('./addons/addon_builds.json'))
-  versions_map.select{|v| v['gocd_version'] == core}.last['addons']['postgresql']
+  versions_map.select { |v| v['gocd_version'] == core }.last['addons']['postgresql']
+end
+
+def boot_centos_container
+  pwd = File.dirname(__FILE__)
+
+  sh 'docker stop centos' do |_ok, _res|
+    puts 'box centos does not exist, ignoring!'
+  end
+
+  sh 'docker rm centos' do |_ok, _res|
+    puts 'box centos does not exist, ignoring!'
+  end
+
+  sh 'docker pull centos:7'
+
+  sh %(docker run --volume #{pwd}:/migration --rm -d -it --name centos centos:7 /bin/bash)
+
+  sh 'docker exec centos yum install -y epel-release centos-release-scl'
+  sh 'docker exec centos yum install -y java-1.8.0-openjdk unzip git wget rh-ruby22-rubygem-rake'
+  sh "docker exec centos /bin/bash -lc 'echo source /opt/rh/rh-ruby22/enable > /etc/profile.d/ruby-22.sh'"
 end

@@ -69,7 +69,7 @@ def boot_centos_container
 
   sh 'docker pull centos:7'
 
-  sh %(docker run --volume #{pwd}:/migration --rm -d -it --name centos centos:7 /bin/bash)
+  sh %(docker run --volume #{pwd}:/migration -d -it --name centos centos:7 /bin/bash)
 
   sh 'docker exec centos yum install -y epel-release centos-release-scl'
   sh 'docker exec centos yum install -y java-1.8.0-openjdk unzip git wget rh-ruby22-rubygem-rake'

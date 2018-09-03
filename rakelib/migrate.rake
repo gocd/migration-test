@@ -171,11 +171,6 @@ end
       sh(%(curl -sL -w "%{http_code}" -X POST  -H "Accept: application/vnd.go.cd.v5+json" -H "Content-Type: application/json" --data "@/migration/rakelib/pipeline.json" #{url} -o /dev/null))
     end
 
-    task :unpause_pipeline do
-      url = "http://localhost:8153/go/api/pipelines/#{PIPELINE_NAME}/unpause"
-      puts 'unpause the pipeline'
-      sh(%(curl -sL -w "%{http_code}" -X POST  -H "Accept:application/vnd.go.cd.v1+text" -H "CONFIRM:true" #{url} -o /dev/null))
-    end
 
     task :trigger_pipeline do
       trigger_pipeline
@@ -228,6 +223,6 @@ end
       "#{versions['version']}-#{versions['build_number']}"
     end
 
-    task migration_test: %i[repo install check_service_is_up create_pipeline unpause_pipeline pipeline_status setup_postgres migrate setup_addon start check_service_is_up_w_postgres trigger_pipeline pipeline_status_after_migration]
+    task migration_test: %i[repo install check_service_is_up create_pipeline pipeline_status setup_postgres migrate setup_addon start check_service_is_up_w_postgres trigger_pipeline pipeline_status_after_migration]
   end
 end

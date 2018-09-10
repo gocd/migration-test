@@ -31,7 +31,6 @@ task :test_migration do
   rescue StandardError => e
     raise "Migration testing failed. Error message #{e.message}"
   ensure
-    sh 'docker exec centos cp /var/log/go-server/*.log /migration' # Copy over the logs for debugging in case of failure
     sh "docker stop centos"
   end
 end

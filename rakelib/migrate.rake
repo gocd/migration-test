@@ -136,12 +136,13 @@ end
     task :install do
       klass.new.install('go-server', ENV['GO_VERSION'])
       klass.new.install('go-agent', ENV['GO_VERSION'])
-      sh('/etc/init.d/go-server start')
+      chmod_R 0755, '/migration/rakelib/with-java.sh'
+      sh("./migration/rakelib/with-java.sh /etc/init.d/go-server start")
       sh('/etc/init.d/go-agent start')
     end
 
     task :start do
-      sh('/etc/init.d/go-server start')
+      sh("./migration/rakelib/with-java.sh /etc/init.d/go-server start")
       sh('/etc/init.d/go-agent start')
     end
 

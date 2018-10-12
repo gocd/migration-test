@@ -84,10 +84,12 @@ end
       sh(%(su - go bash -c 'echo "db.password=postgres"  >> #{path}/postgresqldb.properties'))
     end
 
+  
+
     def service_status(migrated)
       puts 'wait for server to come up'
-      sh('wget http://localhost:8153/go/about --waitretry=120 --retry-connrefused --quiet -O /dev/null')
-
+      #sh('wget http://localhost:8153/go/about --waitretry=600 --retry-connrefused --quiet -O /dev/null')
+      sleep 300
       # check if server startup with postgres only
       if migrated == 'Yes'
         Timeout.timeout(120) do

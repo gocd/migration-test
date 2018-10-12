@@ -73,7 +73,7 @@ end
     def trigger_pipeline
       url = "http://localhost:8153/go/api/pipelines/#{PIPELINE_NAME}/schedule"
       puts 'trigger the pipeline'
-      sh(%(curl -sL -w "%{http_code}" -X POST -H "Accept:application/vnd.go.cd.v1+text" -H "CONFIRM:true" #{url} -o /dev/null))
+      sh(%(curl -sL -w "%{http_code}" -X POST -H "Accept:application/vnd.go.cd.v1+json" -H "X-GoCD-Confirm:true" #{url} -o /dev/null))
     end
 
     def postgres_peoperties_in(path)

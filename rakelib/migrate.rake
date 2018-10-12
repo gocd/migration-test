@@ -211,7 +211,9 @@ end
       sh(%(su - go bash -c 'unzip #{backup_path}/db.zip -d #{migration_location}'))
       postgres_peoperties_in("#{migration_location}/config")
 
+
       cd migration_location do
+        chown go, go, '/migration/rakelib/with-java.sh'
         sh(%(su - go bash -c './migration/rakelib/with-java.sh java -Dcruise.config.dir=#{migration_location}/config -Dgo.h2.db.location=#{migration_location} -jar /migration/addons/#{@addon_version}'))
       end
     end

@@ -171,7 +171,7 @@ end
     task :create_pipeline do
       url = 'http://localhost:8153/go/api/admin/pipelines'
       puts 'create a pipeline'
-      sh(%(curl -sL -w "%{http_code}" -X POST  -H "Accept: application/vnd.go.cd.v5+json" -H "Content-Type: application/json" --data "@/migration/rakelib/pipeline.json" #{url} -o /dev/null))
+      sh(%(curl -sL -w "%{http_code}" -X POST  -H "Accept: application/vnd.go.cd.v6+json" -H "Content-Type: application/json" --data "@/migration/rakelib/pipeline.json" #{url} -o /dev/null))
     end
 
 

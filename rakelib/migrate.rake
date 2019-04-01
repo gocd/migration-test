@@ -26,8 +26,21 @@ class Redhat
   include Rake::DSL if defined?(Rake::DSL)
 
   def repo
-    sh('curl --silent --fail --location https://download.gocd.org/gocd.repo -o /etc/yum.repos.d/gocd.repo')
-    sh("yum clean all && yum makecache --disablerepo='*' --enablerepo='gocd*'")
+    open('/etc/yum.repos.d/gocd.repo', 'w') do |f|
+      f.puts('[gocd]')
+      f.puts('name=gocd')
+      f.puts('baseurl=https://download.gocd.org')
+      f.puts('enabled=1')
+      f.puts('gpgcheck=1')
+      f.puts('gpgkey=https://download.gocd.org/GOCD-GPG-KEY.asc')
+      f.puts('[gocd-exp]')
+      f.puts('name=gocd-exp')
+      f.puts('baseurl=https://download.gocd.org/experimental')
+      f.puts('enabled=1')
+      f.puts('gpgcheck=1')
+      f.puts('gpgkey=https://download.gocd.org/GOCD-GPG-KEY.asc')
+    end
+    sh("yum makecache --disablerepo='*' --enablerepo='gocd*'")
   end
 
   def install(pkg_name, pkg_verion)

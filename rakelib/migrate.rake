@@ -26,21 +26,8 @@ class Redhat
   include Rake::DSL if defined?(Rake::DSL)
 
   def repo
-    open('/etc/yum.repos.d/gocd.repo', 'w') do |f|
-      f.puts('[gocd]')
-      f.puts('name=gocd')
-      f.puts('baseurl=https://download.gocd.io')
-      f.puts('enabled=1')
-      f.puts('gpgcheck=1')
-      f.puts('gpgkey=https://download.gocd.io/GOCD-GPG-KEY.asc')
-      f.puts('[gocd-exp]')
-      f.puts('name=gocd-exp')
-      f.puts('baseurl=https://download.gocd.io/experimental')
-      f.puts('enabled=1')
-      f.puts('gpgcheck=1')
-      f.puts('gpgkey=https://download.gocd.io/GOCD-GPG-KEY.asc')
-    end
-    sh("yum makecache --disablerepo='*' --enablerepo='gocd*'")
+    sh('curl --silent --fail --location https://download.gocd.org/gocd.repo -o /etc/yum.repos.d/gocd.repo')
+    sh("yum clean all && yum makecache --disablerepo='*' --enablerepo='gocd*'")
   end
 
   def install(pkg_name, pkg_verion)
@@ -84,7 +71,7 @@ end
       sh(%(su - go bash -c 'echo "db.password=postgres"  >> #{path}/postgresqldb.properties'))
     end
 
-  
+
 
     def service_status(migrated)
       puts 'wait for server to come up'

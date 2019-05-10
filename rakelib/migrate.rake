@@ -117,10 +117,14 @@ end
 
     def check_pipeline_in_cctray(label)
       begin
+        uri = URI.parse('http://localhost:8153/go/cctray.xml')
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
         timeout(180) do
           loop do
-            response = open('http://localhost:8153/go/cctray.xml').read
-            if response.include? %(<Project name="#{PIPELINE_NAME} :: defaultStage" activity="Sleeping" lastBuildStatus="Success" lastBuildLabel="#{label}")
+            # Send the request
+            response = http.request(request)
+            if response.body.include? %(<Project name="#{PIPELINE_NAME} :: defaultStage" activity="Sleeping" lastBuildStatus="Success" lastBuildLabel="#{label}")
               puts 'Pipeline completed successfully'
               break
             end

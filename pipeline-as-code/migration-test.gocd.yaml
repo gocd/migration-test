@@ -1,0 +1,63 @@
+format_version: 3
+pipelines:
+  migration-test:
+    group: enterprise
+    label_template: ${COUNT}
+    lock_behavior: none
+    environment_variables:
+      ADDON_DOWNLOAD_URL: https://extensions.gocd.org/addons/postgres_experimental/versions
+    secure_variables:
+      EXTENSIONS_USER: AES:pvadUZA5SLwBsEB1IlWeFg==:FL+YtmOB/u/JcI8xykA8FFY7zAKx9YLoFVU4wqpD89bNYRVAlT4VD6O7q1C8F1wA
+      EXTENSIONS_PASSWORD: AES:Z9AXjT7IMXAxLKtgB2g1cg==:pwCDoT6X3A5VIZV0X7sCbAQjom6mV03BCFJ2pz7E1Ig=
+    materials:
+      migration-test:
+        git: https://git.gocd.io/git/gocd/migration-test
+        shallow_clone: false
+        auto_update: true
+        branch: master
+        destination: '#{working_dir}'
+        name: migration-test
+      upload:
+        pipeline: upload-addons
+        stage: upload-addons
+        name: upload
+    stages:
+    - defaultStage:
+        fetch_materials: true
+        keep_artifacts: false
+        clean_workspace: false
+        approval:
+          type: success
+        jobs:
+          defaultJob:
+            timeout: 0
+            environment_variables:
+              HOME: /home/go
+              GO_VERSION: 19.4.0
+            elastic_profile_id: ecs-gocd-dev-build-dind
+            tasks:
+            - fetch:
+                is_file: true
+                source: addon_builds/addon_builds.json
+                destination: '#{working_dir}'
+                pipeline: upload-addons
+                stage: upload-addons
+                job: upload
+                artifact_origin: gocd
+                run_if: passed
+            - exec:
+                arguments:
+                - -c
+                - mkdir -pv addons; mv -v addon_builds.json addons
+                command: /bin/bash
+                working_directory: '#{working_dir}'
+                run_if: passed
+            - exec:
+                arguments:
+                - -lc
+                - rake test_migration
+                command: /bin/bash
+                working_directory: '#{working_dir}'
+                run_if: passed
+    parameters:
+      working_dir: migration-test

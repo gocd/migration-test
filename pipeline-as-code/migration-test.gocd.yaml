@@ -33,7 +33,7 @@ pipelines:
             timeout: 0
             environment_variables:
               HOME: /home/go
-              GO_VERSION: 19.5.0
+              GO_VERSION: 19.6.0
             elastic_profile_id: ecs-gocd-dev-build-dind
             tasks:
             - fetch:

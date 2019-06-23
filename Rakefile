@@ -71,7 +71,7 @@ def boot_centos_container
 
   sh %(docker run --volume #{pwd}:/migration -d -it --name centos centos:7 /bin/bash)
 
-  sh 'docker exec centos yum install -y epel-release centos-release-scl'
+  sh 'docker exec centos yum install -y epel-release centos-release-scl sysvinit-tools'
   sh 'docker exec centos yum install -y java-1.8.0-openjdk unzip git wget rh-ruby22-rubygem-rake'
   sh "docker exec centos /bin/bash -lc 'echo source /opt/rh/rh-ruby22/enable > /etc/profile.d/ruby-22.sh'"
 end

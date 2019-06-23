@@ -158,7 +158,7 @@ end
     end
 
     task :setup_addon do
-      sh('echo ''GO_SERVER_SYSTEM_PROPERTIES=\"\$GO_SERVER_SYSTEM_PROPERTIES -Dgo.database.provider=com.thoughtworks.go.postgresql.PostgresqlDatabase\"''>> /etc/default/go-server')
+      sh(%(su - go bash -c 'echo "wrapper.java.additional.101=-Dgo.database.provider=com.thoughtworks.go.postgresql.PostgresqlDatabase"  >> /var/lib/go-server/wrapper-config/wrapper-properties.conf'))
 
       sh(%(su - go bash -c 'mkdir -p /var/lib/go-server/addons ; cp /migration/addons/#{@addon_version} /var/lib/go-server/addons/'))
       postgres_peoperties_in('/etc/go')

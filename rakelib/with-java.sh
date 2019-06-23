@@ -8,7 +8,7 @@ function use_jdk() {
   jabba install "$1=$2"
   jabba use "$1"
 }
-use_jdk "openjdk@1.11.0-28" "tgz+https://nexus.gocd.io/repository/s3-mirrors/local/jdk/openjdk-11-28_linux-x64_bin.tar.gz"
+use_jdk "openjdk@1.12.0" "tgz+https://download.java.net/java/GA/jdk12/GPL/openjdk-12_linux-x64_bin.tar.gz"
 
 echo "JAVA HOME set to $JAVA_HOME"
 

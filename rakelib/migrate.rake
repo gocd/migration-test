@@ -149,7 +149,6 @@ end
 
     task :start do
       sh("./migration/rakelib/with-java.sh /etc/init.d/go-server start")
-      sh('/etc/init.d/go-agent start')
     end
 
     task :setup_postgres do
@@ -158,9 +157,10 @@ end
     end
 
     task :setup_addon do
-      sh(%(su - go bash -c 'echo "wrapper.java.additional.101=-Dgo.database.provider=com.thoughtworks.go.postgresql.PostgresqlDatabase"  >> /var/lib/go-server/wrapper-config/wrapper-properties.conf'))
+      sh(%(mkdir -p /usr/share/go-server/wrapper-config/))
+      sh(%(echo "wrapper.java.additional.101=-Dgo.database.provider=com.thoughtworks.go.postgresql.PostgresqlDatabase"  >> /usr/share/go-server/wrapper-config/wrapper-properties.conf))
 
-      sh(%(su - go bash -c 'mkdir -p /var/lib/go-server/addons ; cp /migration/addons/#{@addon_version} /var/lib/go-server/addons/'))
+      sh(%(mkdir -p /var/lib/go-server/addons ; cp /migration/addons/#{@addon_version} /var/lib/go-server/addons/))
       postgres_peoperties_in('/etc/go')
     end
 
@@ -175,7 +175,7 @@ end
     task :create_pipeline do
       url = 'http://localhost:8153/go/api/admin/pipelines'
       puts 'create a pipeline'
-      sh(%(curl -sL -w "%{http_code}" -X POST  -H "Accept: application/vnd.go.cd.v6+json" -H "Content-Type: application/json" --data "@/migration/rakelib/pipeline.json" #{url} -o /dev/null))
+      sh(%(curl -sL -w "%{http_code}" -X POST  -H "Accept: application/vnd.go.cd.v8+json" -H "Content-Type: application/json" --data "@/migration/rakelib/pipeline.json" #{url} -o /dev/null))
     end
 
 

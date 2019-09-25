@@ -48,7 +48,7 @@ end
 
 def full_version
   json = JSON.parse(open(RELEASES_JSON_URL).read)
-  json.select { |x| x['go_version'] == ENV['GO_VERSION'] }.sort_by { |a| a['go_build_number'] }.last['go_full_version']
+  json.select { |x| x['go_version'] == ENV['GO_VERSION'] }.sort_by { |a| a['go_build_number'].to_i }.last['go_full_version']
 end
 
 def addon_for(core)

@@ -206,7 +206,7 @@ end
 
       # Send the request
       response = http.request(request)
-      raise "Go Server backup failed with error: #{response.body}" unless response.is_a?(Net::HTTPOK)
+      raise "Go Server backup failed with error: #{response.body}" unless response.is_a?(Net::HTTPAccepted)
       backup_path = JSON.parse(response.body)['path']
       @addon_version = postgres_jar_for server_version
       sh('/etc/init.d/go-server stop')

@@ -200,7 +200,7 @@ end
       migration_location = "#{Dir.tmpdir}/migration"
       uri = URI.parse('http://localhost:8153/go/api/backups')
 
-      header = { 'Accept' => 'application/vnd.go.cd+json', 'Confirm' => 'true' }
+      header = { 'Accept' => 'application/vnd.go.cd+json', 'X-GoCD-Confirm' => 'true' }
       http = Net::HTTP.new(uri.host, uri.port)
       request = Net::HTTP::Post.new(uri.request_uri, header)
 

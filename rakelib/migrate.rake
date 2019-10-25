@@ -73,7 +73,7 @@ end
     def trigger_pipeline
       url = "http://localhost:8153/go/api/pipelines/#{PIPELINE_NAME}/schedule"
       puts 'trigger the pipeline'
-      sh(%(curl -sL -w "%{http_code}" -X POST -H "Accept:application/vnd.go.cd.v1+json" -H "X-GoCD-Confirm:true" #{url} -o /dev/null))
+      sh(%(curl -sL -w "%{http_code}" -X POST -H "Accept:application/vnd.go.cd+json" -H "X-GoCD-Confirm:true" #{url} -o /dev/null))
     end
 
     def postgres_peoperties_in(path)
@@ -175,7 +175,7 @@ end
     task :create_pipeline do
       url = 'http://localhost:8153/go/api/admin/pipelines'
       puts 'create a pipeline'
-      sh(%(curl -sL -w "%{http_code}" -X POST  -H "Accept: application/vnd.go.cd.v8+json" -H "Content-Type: application/json" --data "@/migration/rakelib/pipeline.json" #{url} -o /dev/null))
+      sh(%(curl -sL -w "%{http_code}" -X POST  -H "Accept: application/vnd.go.cd+json" -H "Content-Type: application/json" --data "@/migration/rakelib/pipeline.json" #{url} -o /dev/null))
     end
 
 
@@ -200,7 +200,7 @@ end
       migration_location = "#{Dir.tmpdir}/migration"
       uri = URI.parse('http://localhost:8153/go/api/backups')
 
-      header = { 'Accept' => 'application/vnd.go.cd.v1+json', 'Confirm' => 'true' }
+      header = { 'Accept' => 'application/vnd.go.cd+json', 'Confirm' => 'true' }
       http = Net::HTTP.new(uri.host, uri.port)
       request = Net::HTTP::Post.new(uri.request_uri, header)
 
@@ -227,7 +227,7 @@ end
     end
 
     def server_version
-      versions = JSON.parse(open('http://localhost:8153/go/api/version', 'Accept' => 'application/vnd.go.cd.v1+json').read)
+      versions = JSON.parse(open('http://localhost:8153/go/api/version', 'Accept' => 'application/vnd.go.cd+json').read)
       "#{versions['version']}-#{versions['build_number']}"
     end
 

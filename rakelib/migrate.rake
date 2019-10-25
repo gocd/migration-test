@@ -200,13 +200,13 @@ end
       migration_location = "#{Dir.tmpdir}/migration"
       uri = URI.parse('http://localhost:8153/go/api/backups')
 
-      header = { 'Accept' => 'application/vnd.go.cd+json', 'X-GoCD-Confirm' => 'true' }
+      header = { 'Accept' => 'application/vnd.go.cd.v1+json', 'Confirm' => 'true' }
       http = Net::HTTP.new(uri.host, uri.port)
       request = Net::HTTP::Post.new(uri.request_uri, header)
 
       # Send the request
       response = http.request(request)
-      raise "Go Server backup failed with error: #{response.body}" unless response.is_a?(Net::HTTPAccepted)
+      raise "Go Server backup failed with error: #{response.body}" unless response.is_a?(Net::HTTPOK)
       backup_path = JSON.parse(response.body)['path']
       @addon_version = postgres_jar_for server_version
       sh('/etc/init.d/go-server stop')

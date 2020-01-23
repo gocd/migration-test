@@ -10,7 +10,7 @@ This test checks the user scenario of migrating GoCD server from a H2 database t
 
 ## Run instruction
 
-To run it locally, create an `addons` folder in the checkout folder, download and place the postgres addon jar in it and then run,
+To run it locally, create an `addons` folder in the checkout folder, download and place the postgres addon jar in it. Also place the latest `addon_builds.json` file in the same location and then run,
 
 `GO_VERSION=X.X.X rake test_migration`
 

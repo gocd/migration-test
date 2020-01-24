@@ -34,7 +34,7 @@ pipelines:
             environment_variables:
               HOME: /home/go
               GO_VERSION: 20.1.0
-            elastic_profile_id: ecs-gocd-dev-build-dind
+            elastic_profile_id: ecs-gocd-dev-build-dind-migration
             tasks:
             - fetch:
                 is_file: true

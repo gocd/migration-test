@@ -242,10 +242,10 @@ end
     task :migration_test do
       begin
         %i[repo install check_service_is_up create_pipeline pipeline_status setup_postgres migrate setup_addon start check_service_is_up_w_postgres trigger_pipeline pipeline_status_after_migration].each do |t|
-          Rake::Task[t].execute
+          Rake::Task["centos:#{t}"].execute
         end
       ensure
-        Rake::Task["stop_all"].execute
+        Rake::Task["centos:stop_all"].execute
       end
     end
   end

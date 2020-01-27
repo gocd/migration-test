@@ -52,14 +52,16 @@ class Redhat
   end
 
   def setup_postgres
-    sh('yum install --assumeyes postgresql-server')
-    sh('yum install --assumeyes postgresql-contrib')
-    sh(%(su - postgres -c bash -c 'initdb -D /var/lib/pgsql/data'))
-    sh(%(su - postgres -c bash -c 'pg_ctl -D /var/lib/pgsql/data -l /var/lib/pgsql/data/logfile start' && sleep 10))
+    sh('yum install --assumeyes https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm')
+    sh('yum install --assumeyes postgresql10 postgresql10-server postgresql10-contrib')
+    sh (%(su - postgres -c bash -c '/usr/pgsql-10/bin/initdb /var/lib/pgsql/data'))
+
+    sh (%(su - postgres -c bash -c '/usr/pgsql-10/bin/pg_ctl start -l /var/lib/pgsql/data/logfile -D /var/lib/pgsql/data -w -t 60'))
     sh(%(su - postgres -c bash -c 'sed -i 's/peer/md5/g' /var/lib/pgsql/data/pg_hba.conf'))
-    sh(%(su - postgres -c /bin/bash -c "psql -c \\"ALTER USER postgres WITH PASSWORD 'postgres'\\";"))
-    sh(%(su - postgres -c bash -c 'createdb -U postgres cruise'))
-    sh(%(su - postgres -c bash -c 'pg_ctl -D /var/lib/pgsql/data -l /var/lib/pgsql/data/logfile restart'))
+    sh(%(su - postgres -c /bin/bash -c "/usr/pgsql-10/bin/psql -c \\"ALTER USER postgres WITH PASSWORD 'postgres'\\";"))
+
+    sh(%(su - postgres -c bash -c '/usr/pgsql-10/bin/createdb -U postgres cruise'))
+    sh(%(su - postgres -c bash -c '/usr/pgsql-10/bin/pg_ctl -D /var/lib/pgsql/data  restart'))
   end
 end
 
@@ -94,7 +96,7 @@ end
       if migrated == 'Yes'
         Timeout.timeout(120) do
           loop do
-            if File.open('/var/log/go-server/go-server.log').lines.any? { |line| line.include?('Using connection configuration jdbc:postgresql://localhost:5432/cruise [User: postgres] [Password Encrypted: false]') }
+            if File.open('/var/log/go-server/go-server.log').each_line.any? { |line| line.include?('Using connection configuration jdbc:postgresql://localhost:5432/cruise [User: postgres] [Password Encrypted: false]') }
               p 'server up with postgres'
               break
             end
@@ -102,17 +104,22 @@ end
         end
       end
 
-      puts 'wait for agent to come up'
-      Timeout.timeout(180) do
-        loop do
-          agents = JSON.parse(open('http://localhost:8153/go/api/agents', 'Accept' => 'application/vnd.go.cd+json').read)['_embedded']['agents']
+      # puts 'wait for agent to come up'
+      # Timeout.timeout(180) do
+      #   loop do
+      #     uri = URI.parse('http://localhost:8153/go/api/agents')
+      #     http = Net::HTTP.new(uri.host, uri.port)
+      #     request = Net::HTTP::Get.new(uri.request_uri)
+      #     request['Accept'] = 'application/vnd.go.cd+json'
+      #     response = http.request(request)
+      #     agents = JSON.parse(response.body)['_embedded']['agents']
 
-          if agents.any? { |a| a['agent_state'] == 'Idle' }
-            puts 'Agent is up'
-            break
-          end
-        end
-      end
+      #     if agents.any? { |a| a['agent_state'] == 'Idle' }
+      #       puts 'Agent is up'
+      #       break
+      #     end
+      #   end
+      # end
     end
 
     def check_pipeline_in_cctray(label)
@@ -208,7 +215,7 @@ end
       response = http.request(request)
       raise "Go Server backup failed with error: #{response.body}" unless response.is_a?(Net::HTTPOK)
       backup_path = JSON.parse(response.body)['path']
-      @addon_version = postgres_jar_for server_version
+      @addon_version = 'go-postgresql-20.1.0-0-dd5cfc7.jar' #postgres_jar_for server_version
       sh('/etc/init.d/go-server stop')
 
       sh(%(su - go bash -c 'mkdir -p #{migration_location}/config ; cp /migration/addons/#{@addon_version} #{migration_location}'))
@@ -222,8 +229,9 @@ end
     end
 
     def postgres_jar_for(core)
-      versions_map = JSON.parse(File.read('/migration/addons/addon_builds.json'))
-      versions_map.select { |v| v['gocd_version'] == core }.last['addons']['postgresql']
+
+      # versions_map = JSON.parse(File.read('/migration/addons/addon_builds.json'))
+      # versions_map.select { |v| v['gocd_version'] == core }.last['addons']['postgresql']
     end
 
     def server_version

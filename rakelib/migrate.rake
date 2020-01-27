@@ -198,9 +198,10 @@ end
       check_pipeline_in_cctray 2
     end
 
-    task :stop do
+    task :stop_all do
       sh('/etc/init.d/go-server stop')
       sh('/etc/init.d/go-agent stop')
+      sh(%(su - postgres -c bash -c '/usr/pgsql-10/bin/pg_ctl -D /var/lib/pgsql/data  stop'))
     end
 
     task :migrate do
@@ -238,6 +239,7 @@ end
       "#{versions['version']}-#{versions['build_number']}"
     end
 
-    task migration_test: %i[repo install check_service_is_up create_pipeline pipeline_status setup_postgres migrate setup_addon start check_service_is_up_w_postgres trigger_pipeline pipeline_status_after_migration]
+#
+    task migration_test: %i[repo install check_service_is_up create_pipeline pipeline_status setup_postgres migrate setup_addon start check_service_is_up_w_postgres trigger_pipeline pipeline_status_after_migration stop_all]
   end
 end

@@ -215,7 +215,7 @@ end
       response = http.request(request)
       raise "Go Server backup failed with error: #{response.body}" unless response.is_a?(Net::HTTPOK)
       backup_path = JSON.parse(response.body)['path']
-      @addon_version = 'go-postgresql-20.1.0-0-dd5cfc7.jar' #postgres_jar_for server_version
+      @addon_version = postgres_jar_for server_version
       sh('/etc/init.d/go-server stop')
 
       sh(%(su - go bash -c 'mkdir -p #{migration_location}/config ; cp /migration/addons/#{@addon_version} #{migration_location}'))
@@ -229,9 +229,8 @@ end
     end
 
     def postgres_jar_for(core)
-
-      # versions_map = JSON.parse(File.read('/migration/addons/addon_builds.json'))
-      # versions_map.select { |v| v['gocd_version'] == core }.last['addons']['postgresql']
+      versions_map = JSON.parse(File.read('/migration/addons/addon_builds.json'))
+      versions_map.select { |v| v['gocd_version'] == core }.last['addons']['postgresql']
     end
 
     def server_version

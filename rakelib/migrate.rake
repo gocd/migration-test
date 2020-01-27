@@ -104,22 +104,22 @@ end
         end
       end
 
-      # puts 'wait for agent to come up'
-      # Timeout.timeout(180) do
-      #   loop do
-      #     uri = URI.parse('http://localhost:8153/go/api/agents')
-      #     http = Net::HTTP.new(uri.host, uri.port)
-      #     request = Net::HTTP::Get.new(uri.request_uri)
-      #     request['Accept'] = 'application/vnd.go.cd+json'
-      #     response = http.request(request)
-      #     agents = JSON.parse(response.body)['_embedded']['agents']
+      puts 'wait for agent to come up'
+      Timeout.timeout(180) do
+        loop do
+          uri = URI.parse('http://localhost:8153/go/api/agents')
+          http = Net::HTTP.new(uri.host, uri.port)
+          request = Net::HTTP::Get.new(uri.request_uri)
+          request['Accept'] = 'application/vnd.go.cd+json'
+          response = http.request(request)
+          agents = JSON.parse(response.body)['_embedded']['agents']
 
-      #     if agents.any? { |a| a['agent_state'] == 'Idle' }
-      #       puts 'Agent is up'
-      #       break
-      #     end
-      #   end
-      # end
+          if agents.any? { |a| a['agent_state'] == 'Idle' }
+            puts 'Agent is up'
+            break
+          end
+        end
+      end
     end
 
     def check_pipeline_in_cctray(label)

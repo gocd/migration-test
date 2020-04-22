@@ -72,7 +72,7 @@ def boot_centos_container
   sh %(docker run --volume #{pwd}:/migration -d -it --name centos centos:7 /bin/bash)
 
   sh 'docker exec centos yum install -y epel-release centos-release-scl sysvinit-tools'
-  sh 'docker exec centos yum install -y unzip git wget rh-ruby22-rubygem-rake'
+  sh 'docker exec centos yum install -y unzip git wget rh-ruby23-rubygem-rake'
   sh "docker exec centos /bin/bash -lc 'echo source /opt/rh/rh-ruby22/enable > /etc/profile.d/ruby-22.sh'"
   sh %(docker exec centos /bin/bash -lc 'curl https://download.java.net/openjdk/jdk11/ri/openjdk-11+28_linux-x64_bin.tar.gz -o /home/openjdk-11+28_linux-x64_bin.tar.gz')
   sh %(docker exec centos /bin/bash -lc 'tar -xvf /home/openjdk-11+28_linux-x64_bin.tar.gz -C /home/')

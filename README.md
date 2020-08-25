@@ -1,3 +1,5 @@
+# Archiving this repo since GoCD has in built support for PostgreSQL and the paid PostgreSQL addon is no longer supported.
+
 # Migration-test
 
 This test checks the user scenario of migrating GoCD server from a H2 database to PostgreSQL database
